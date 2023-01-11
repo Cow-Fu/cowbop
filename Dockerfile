@@ -26,6 +26,7 @@ RUN sed -i 's/false/true/' /root/.local/share/nvim/mason/packages/python-lsp-ser
 
 
 # install requirements
-RUN pip install youtube-dl nextcord
+COPY ./requirements.txt /usr/src/requirements/
+RUN pip install -r /usr/src/requirements/requirements.txt -U
 
 WORKDIR /usr/src/app
