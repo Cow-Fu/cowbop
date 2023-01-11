@@ -45,6 +45,17 @@ async def pause(interaction: nextcord.Interaction):
 async def resume(interaction: nextcord.Interaction):
     await interaction.guild.voice_client.resume()
 
+
+@bot.slash_command(guild_ids=GUILD_IDS, description="stop music")
+async def stop(interaction: nextcord.Interaction):
+    voice_client: nextcord.VoiceClient = interaction.guild.voice_client
+    if not voice_client.is_playing():
+        await interaction.send("Not playing anything currently", delete_after=10)
+        return
+    interaction.guild.voice_client.stop()
+    await interaction.send("Stopping", delete_after=10)
+
+
 @bot.slash_command(guild_ids=GUILD_IDS, description="play music")
 async def play(interaction: nextcord.Interaction, url: str):
     if not await join_vc_from_interaction(interaction):
