@@ -11,7 +11,7 @@ RUN wget 'https://github.com/neovim/neovim/releases/download/stable/nvim-linux64
 RUN apt install ./nvim-linux64.deb
 
 WORKDIR /root/.config/nvim
-RUN wget 'https://raw.githubusercontent.com/nvim-lua/kickstart.nvim/master/init.lua'
+RUN wget 'https://raw.githubusercontent.com/Cow-Fu/kickstart.nvim/master/init.lua'
 
 # takes 3 times to do it for some reason
 RUN nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
@@ -23,7 +23,6 @@ RUN nvim --headless -c "MasonInstall python-lsp-server" -c qall
 
 # enable autocomplete of site packages
 RUN sed -i 's/false/true/' /root/.local/share/nvim/mason/packages/python-lsp-server/venv/pyvenv.cfg
-
 
 # install requirements
 COPY ./requirements.txt /usr/src/requirements/
