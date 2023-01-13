@@ -45,19 +45,18 @@ async def volume(interaction: nextcord.Interaction, volume: int):
     if not 0 < volume <= 100:
         await interaction.send("Value must be between 1 and 100", delete_after=10)
         return
-    
     interaction.guild.voice_client.source.volume = volume / 100
     await interaction.send(f"Volume has been set to {volume}%", delete_after=10)
 
 
 @bot.slash_command(guild_ids=GUILD_IDS, description="pauses")
 async def pause(interaction: nextcord.Interaction):
-    await interaction.guild.voice_client.pause()
+    interaction.guild.voice_client.pause()
 
 
 @bot.slash_command(guild_ids=GUILD_IDS, description="resume")
 async def resume(interaction: nextcord.Interaction):
-    await interaction.guild.voice_client.resume()
+    interaction.guild.voice_client.resume()
 
 
 @bot.slash_command(guild_ids=GUILD_IDS, description="stop music")
