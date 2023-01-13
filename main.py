@@ -26,6 +26,20 @@ def download_video(url:str):
 
 
 GUILD_IDS = [852764173292142593]
+@bot.slash_command(guild_ids=GUILD_IDS, description="join a voice chat")
+async def join(interaction: nextcord.Interaction, channel: nextcord.VoiceChannel):
+    # Todo do this
+    vc: nextcord.VoiceClient = interaction.guild.voice_client
+    if not vc:
+        await channel.connect()
+        return
+    for member in channel.members:
+        if member.id == BOT_ID:
+            await interaction.send("Already connected!", delete_after=10, ephemeral=True)
+            return
+    await vc.move_to(channel)
+
+
 @bot.slash_command(guild_ids=GUILD_IDS, description="change volume")
 async def volume(interaction: nextcord.Interaction, volume: int):
     if not 0 < volume <= 100:
