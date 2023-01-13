@@ -1,20 +1,24 @@
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import commands, tasks
 from pytube import YouTube
 import pytube
 
 intents = nextcord.Intents.all()
 bot = commands.Bot(intents=intents)
 
+VOLUME = .05
+queue = []
 
 async def join_vc_from_interaction(interaction: nextcord.Interaction):
     if not interaction.user.voice:
         return False
+    if interaction.guild.voice_client:
+        return True
     await interaction.user.voice.channel.connect()
     return True
 
 
-def download_video(url:str):
+def download_video(url: str):
     videos = YouTube(url)
     video: pytube.Stream = videos.streams.filter(mime_type="audio/mp4").last()
     try:
@@ -25,14 +29,25 @@ def download_video(url:str):
     return True
 
 
+BOT_ID = 1061470464800731218
 GUILD_IDS = [852764173292142593]
+
+channels = {}
+
+#@bot.slash_command(guild_ids=GUILD_IDS, description="Search for a song")
+async def search(interaction: nextcord.Interaction, query: str):
+    results = pytube.Search(query)
+
+
 @bot.slash_command(guild_ids=GUILD_IDS, description="join a voice chat")
 async def join(interaction: nextcord.Interaction, channel: nextcord.VoiceChannel):
     # Todo do this
+
     vc: nextcord.VoiceClient = interaction.guild.voice_client
     if not vc:
         await channel.connect()
         return
+
     for member in channel.members:
         if member.id == BOT_ID:
             await interaction.send("Already connected!", delete_after=10, ephemeral=True)
@@ -71,21 +86,35 @@ async def stop(interaction: nextcord.Interaction):
 
 @bot.slash_command(guild_ids=GUILD_IDS, description="play music")
 async def play(interaction: nextcord.Interaction, url: str):
+    queue.append({"interaction": interaction, "url": url})
+    if not processQueue.is_running():
+        processQueue.start()
+
+ 
+def playMusic(interaction: nextcord.Interaction, url: str):
     if not await join_vc_from_interaction(interaction):
-        await interaction.send("You need to join a voice channel.", delete_after=10)
+            await interaction.send("You need to join a voice channel.", delete_after=10)
+            return
+
+        if not download_video(url):
+            await interaction.send("Error downloading video", delete_after=10)
+            return
+        thing = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
+        thing.volume = VOLUME
+        interaction.guild.voice_client.play(thing)
+
+
+@tasks.loop(seconds=1)
+def processQueue():
+    if not queue and processQueue.is_running():
+        processQueue.stop()
         return
-    if not download_video(url):
-        await interaction.send("Error downloading video", delete_after=10)
-        return
+    interaction, url = *queue.pop(0)
+    playMusic(interaction, url)
 
-    thing = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
-    thing.volume = .05
 
-    interaction.guild.voice_client.play(thing)
-    # await interaction.response.send_message(f"ur url nerd: {url}")
 
-# rawr.streams.filter(mime_type="audio/mp4").last().download()
 
-bot.run("MTA2MTQ3MDQ2NDgwMDczMTIxOA.Gtc6pS.HqY-gJRqjagxCxnmL_bj2fECiJ1wrzux9kaMA8")
+    bot.run("MTA2MTQ3MDQ2NDgwMDczMTIxOA.Gtc6pS.HqY-gJRqjagxCxnmL_bj2fECiJ1wrzux9kaMA8")
 
 
