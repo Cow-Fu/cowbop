@@ -20,7 +20,14 @@ async def join_vc_from_interaction(interaction: nextcord.Interaction):
 
 def download_video(url: str):
     videos = YouTube(url)
-    video: pytube.Stream = videos.streams.filter(mime_type="audio/mp4").last()
+    video: pytube.Stream
+    try:
+        video = videos.streams.filter(mime_type="audio/mp4").last()
+    except Exception:
+        videos.bypass_age_gate()
+        video = videos.streams.filter(mime_type="audio/mp4").last()
+
+
     try:
         video.download(filename="file.mp4")
     except Exception as e:
