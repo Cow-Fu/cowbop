@@ -94,30 +94,31 @@ async def play(interaction: nextcord.Interaction, url: str):
         processQueue.start()
 
  
-def playMusic(interaction: nextcord.Interaction, url: str):
+async def playMusic(interaction: nextcord.Interaction, url: str):
     if not await join_vc_from_interaction(interaction):
             await interaction.send("You need to join a voice channel.", delete_after=10)
             return
-
-        if not download_video(url):
-            await interaction.send("Error downloading video", delete_after=10)
-            return
-        thing = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
-        thing.volume = VOLUME
-        interaction.guild.voice_client.play(thing)
+    if not download_video(url):
+        await interaction.send("Error downloading video", delete_after=10)
+        return
+    thing = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
+    thing.volume = VOLUME
+    interaction.guild.voice_client.play(thing)
 
 
 @tasks.loop(seconds=1)
-def processQueue():
+async def processQueue():
     if not queue and processQueue.is_running():
         processQueue.stop()
         return
-    interaction, url = *queue.pop(0)
-    playMusic(interaction, url)
+    item = queue[0]
+    interaction = item["interaction"]
+    url = item["url"]
+    if interaction.guild.voice_client:
+        if interaction.guild.voice_client.is_playing():
+            return
+    await playMusic(interaction, url)
+    queue.pop(0)
 
 
-
-
-    bot.run("MTA2MTQ3MDQ2NDgwMDczMTIxOA.Gtc6pS.HqY-gJRqjagxCxnmL_bj2fECiJ1wrzux9kaMA8")
-
-
+bot.run("MTA2MTQ3MDQ2NDgwMDczMTIxOA.Gtc6pS.HqY-gJRqjagxCxnmL_bj2fECiJ1wrzux9kaMA8")
