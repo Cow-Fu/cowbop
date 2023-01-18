@@ -9,6 +9,7 @@ bot = commands.Bot(intents=intents)
 VOLUME = .05
 queue = []
 
+
 async def join_vc_from_interaction(interaction: nextcord.Interaction):
     if not interaction.user.voice:
         return False
@@ -26,8 +27,6 @@ def download_video(url: str):
     except Exception:
         videos.bypass_age_gate()
         video = videos.streams.filter(mime_type="audio/mp4").last()
-
-
     try:
         video.download(filename="file.mp4")
     except Exception as e:
@@ -48,13 +47,10 @@ async def search(interaction: nextcord.Interaction, query: str):
 
 @bot.slash_command(guild_ids=GUILD_IDS, description="join a voice chat")
 async def join(interaction: nextcord.Interaction, channel: nextcord.VoiceChannel):
-    # Todo do this
-
     vc: nextcord.VoiceClient = interaction.guild.voice_client
     if not vc:
         await channel.connect()
         return
-
     for member in channel.members:
         if member.id == BOT_ID:
             await interaction.send("Already connected!", delete_after=10, ephemeral=True)
