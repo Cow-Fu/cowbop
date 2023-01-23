@@ -1,5 +1,6 @@
 import pytube
 import nextcord
+import YouTubeVideo
 
 
 class YouTubeVideoError(Exception):
@@ -7,11 +8,9 @@ class YouTubeVideoError(Exception):
 
 
 class YoutubeVideoBuilder:
-    def __init__(self):
-        pass
-
-    def build(self, interaction: nextcord.Interaction, url: str):
+    @staticmethod
+    def build(interaction: nextcord.Interaction, url: str) -> YouTubeVideo:
         try:
-            return pytube.YouTube(url, use_oauth=True)
+            return YouTubeVideo(url, pytube.YouTube(url, use_oauth=True))
         except Exception:
             raise YouTubeVideoError
