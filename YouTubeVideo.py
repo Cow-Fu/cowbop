@@ -1,5 +1,8 @@
 from pytube import YouTube
+from dataclasses import dataclass
 
+
+@dataclass
 class YoutubeVideo:
-    def __init__(self, video: YouTube):
-        self._video = video
+    url: str
+    video: YouTube
