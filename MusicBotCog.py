@@ -23,7 +23,8 @@ class MusicBotCog(commands.Cog):
 
     @nextcord.slash_command(description="Resumes current song")
     def resume(self, interaction: nextcord.Interaction):
-        pass
+        vc: nextcord.VoiceClient = interaction.guild.voice_client
+        vc.resume()
 
     @nextcord.slash_command(description="Stops playing music")
     def stop(self, interaction: nextcord.Interaction):
