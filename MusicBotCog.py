@@ -8,12 +8,12 @@ class MusicBotCog(commands.Cog):
         self._bot = bot
         self._bot_id = bot_id
         self._volume = 5
-        self.q = QueueManager()
+        self._queue = QueueManager()
 
     @nextcord.slash_command(description="Adds music to the queue")
     def play(self, interaction: nextcord.Interaction, url: str):
-        self.q.add(url)
-        if not self.q.is_empty() and not self.song_loop.is_running():
+        self._queue.add(url)
+        if not self._queue.is_empty() and not self.song_loop.is_running():
             self.song_loop.start()
 
     @nextcord.slash_command(description="Pauses current song")
