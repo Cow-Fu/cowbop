@@ -11,32 +11,36 @@ class MusicBotCog(commands.Cog):
         self._queue = QueueManager()
 
     @nextcord.slash_command(description="Adds music to the queue")
-    def play(self, interaction: nextcord.Interaction, url: str):
+    async def play(self, interaction: nextcord.Interaction, url: str):
         self._queue.add(url)
         if not self._queue.is_empty() and not self.song_loop.is_running():
             self.song_loop.start()
 
     @nextcord.slash_command(description="Pauses current song")
-    def pause(self, interaction: nextcord.Interaction):
+    async def pause(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
         vc.pause()
+        await interaction.send("Playback has been paused", ephemeral=True, delete_after=10)
 
     @nextcord.slash_command(description="Resumes current song")
-    def resume(self, interaction: nextcord.Interaction):
+    async def resume(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
         vc.resume()
+        await interaction.send("Playback has been resumed", ephemeral=True, delete_after=10)
+        
 
     @nextcord.slash_command(description="Stops playing music")
-    def stop(self, interaction: nextcord.Interaction):
+    async def stop(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
         vc.stop()
+        await interaction.send("Playback has been stopped", ephemeral=True, delete_after=10)
 
     @nextcord.slash_command(description="Skips current song")
-    def skip(self, interaction: nextcord.Interaction):
+    async def skip(self, interaction: nextcord.Interaction):
         pass
 
     @nextcord.slash_command(description="Volume")
-    def volume(self, interaction: nextcord.Interaction, volume: int):
+    async def volume(self, interaction: nextcord.Interaction, volume: int):
         if not 0 < volume <= 100:
             await interaction.send("Value must be between 1 and 100", delete_after=10)
             return
