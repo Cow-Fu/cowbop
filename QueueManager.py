@@ -1,4 +1,4 @@
-import YouTubeVideoBuilder
+from YouTubeVideoBuilder import YoutubeVideoBuilder
 
 
 class QueueManager:
