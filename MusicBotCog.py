@@ -36,8 +36,12 @@ class MusicBotCog(commands.Cog):
         pass
 
     @nextcord.slash_command(description="Volume")
-    def volume(self, interaction: nextcord.Interaction):
-        pass
+    def volume(self, interaction: nextcord.Interaction, volume: int):
+        if not 0 < volume <= 100:
+            await interaction.send("Value must be between 1 and 100", delete_after=10)
+            return
+        interaction.guild.voice_client.source.volume = volume / 100
+        await interaction.send(f"Volume has been set to {volume}%", delete_after=10)
 
     @nextcord.slash_command(description="Displays the current song queue")
     def queue(self, interaction: nextcord.Interaction):
