@@ -22,3 +22,6 @@ class QueueManager:
 
     def is_empty(self):
         return not bool(self._queue)
+
+    def length(self):
+        return len(self._queue)
