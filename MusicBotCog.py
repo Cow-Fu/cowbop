@@ -1,6 +1,7 @@
 import nextcord
 from nextcord.ext import commands, tasks
 from QueueManager import QueueManager
+from YouTubeVideo import YoutubeVideo
 
 
 class MusicBotCog(commands.Cog):
@@ -48,8 +49,18 @@ class MusicBotCog(commands.Cog):
         await interaction.send(f"Volume has been set to {volume}%", delete_after=10)
 
     @nextcord.slash_command(description="Displays the current song queue")
-    def queue(self, interaction: nextcord.Interaction):
-        pass
+    async def queue(self, interaction: nextcord.Interaction):
+        text = ""
+        lines = 5
+        if self._queue.length() < lines:
+            lines = self._queue.length()
+
+        video: YoutubeVideo
+        for i in range(lines):
+            # TODO add more fields to youtubevideo class
+            video = self._queue.get(i)
+            text += f"{video.video.title}\n"
+        await interaction.send(text)
 
     @tasks.loop(seconds=1)
     def song_loop():
