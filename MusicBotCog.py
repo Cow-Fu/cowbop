@@ -54,10 +54,8 @@ class MusicBotCog(commands.Cog):
         lines = 5
         if self._queue.length() < lines:
             lines = self._queue.length()
-
         video: YoutubeVideo
         for i in range(lines):
-            # TODO add more fields to youtubevideo class
             video = self._queue.get(i)
             text += f"{video.video.title}\n"
         await interaction.send(text)
