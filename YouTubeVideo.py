@@ -1,8 +1,9 @@
 from pytube import YouTube
 from dataclasses import dataclass
+from nextcord import Interaction
 
 
 @dataclass
 class YoutubeVideo:
-    url: str
+    interaction: Interaction
     video: YouTube
