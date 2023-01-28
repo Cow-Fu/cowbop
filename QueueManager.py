@@ -16,12 +16,18 @@ class QueueManager:
     def get_next(self) -> YouTubeVideo:
         return self.get(0)
 
-    def add(self, interaction, url):
-        video = YoutubeVideoBuilder.build(interaction, url)
+    def add(self, interaction, url) -> bool:
+        video: YouTubeVideo
+        try:
+            video = YoutubeVideoBuilder.build(interaction, url)
+        except Exception as e:
+            print(e)
+            return False
         self.queue.append(video)
+        return True
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return not bool(self._queue)
 
-    def length(self):
+    def length(self) -> int:
         return len(self._queue)
