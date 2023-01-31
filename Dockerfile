@@ -4,7 +4,8 @@ RUN apt update
 RUN apt install -y fish \
 	git \
 	vim \
-	ffmpeg
+	ffmpeg \
+	rg
 
 # install neovim
 RUN wget 'https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.deb'
