@@ -1,29 +1,24 @@
 from YouTubeVideoBuilder import YoutubeVideoBuilder
-from YouTubeVideo import YouTubeVideo
+import YouTubeVideo
 
 
 class QueueManager:
     def __init__(self):
-        self._queue: YouTubeVideo
         self._queue = []
 
-    def pop(self) -> YouTubeVideo:
-        return self.queue.pop()
+    def pop(self, index=0) -> YouTubeVideo:
+        return self._queue.pop(index)
 
     def get(self, index) -> YouTubeVideo:
-        return self.queue[index]
+        return self._queue[index]
 
     def get_next(self) -> YouTubeVideo:
-        return self.get(0)
+        return self._queue[0]
 
     def add(self, interaction, url) -> bool:
         video: YouTubeVideo
-        try:
-            video = YoutubeVideoBuilder.build(interaction, url)
-        except Exception as e:
-            print(e)
-            return False
-        self.queue.append(video)
+        video = YoutubeVideoBuilder.build(interaction, url)
+        self._queue.append(video)
         return True
 
     def is_empty(self) -> bool:

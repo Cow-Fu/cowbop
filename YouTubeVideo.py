@@ -4,6 +4,6 @@ from nextcord import Interaction
 
 
 @dataclass
-class YoutubeVideo:
+class YouTubeVideo:
     interaction: Interaction
     video: YouTube

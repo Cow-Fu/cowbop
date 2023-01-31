@@ -1,7 +1,7 @@
 import nextcord
 from nextcord.ext import commands, tasks
 from QueueManager import QueueManager
-from YouTubeVideo import YoutubeVideo
+from YouTubeVideo import YouTubeVideo
 
 
 class MusicBotCog(commands.Cog):
@@ -54,7 +54,7 @@ class MusicBotCog(commands.Cog):
         lines = 5
         if self._queue.length() < lines:
             lines = self._queue.length()
-        video: YoutubeVideo
+        video: YouTubeVideo
         for i in range(lines):
             video = self._queue.get(i)
             text += f"{video.video.title}\n"
