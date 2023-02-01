@@ -1,6 +1,6 @@
 import pytube
 from nextcord import Interaction
-import YouTubeVideo
+from YouTubeVideo import YouTubeVideo
 
 
 class YouTubeVideoError(Exception):
