@@ -12,5 +12,5 @@ class YoutubeVideoBuilder:
     def build(interaction: Interaction, url: str) -> YouTubeVideo:
         try:
             return YouTubeVideo(interaction, pytube.YouTube(url, use_oauth=True))
-        except Exception:
-            raise YouTubeVideoError
+        except pytube.exceptions.RegexMatchError:
+            interaction.send("Not a valid Youtube url")
