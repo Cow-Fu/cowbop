@@ -1,13 +1,12 @@
-import nextcord
 from QueueManager import QueueManager
-from nextcord.ext import tasks
 from YouTubeVideo import YouTubeVideo
+from nextcord.ext import tasks
+import nextcord
 
 
 class MediaController:
-
     def __init__(self):
-        self.queue = QueueManager()
+        self._queue = QueueManager()
         self._volume = 5
 
     async def play(self, interaction: nextcord.Interaction, url: str):
@@ -16,7 +15,7 @@ class MediaController:
                 interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
             await interaction.user.voice.channel.connect()
-        self.queue.add(self, interaction, url)
+        self._queue.add(self, interaction, url)
         if not self.song_loop.is_running():
             self.song_loop.start()
 
@@ -33,7 +32,7 @@ class MediaController:
     async def stop(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
         vc.stop()
-        self.queue.clear()
+        self._queue.clear()
         await interaction.send("Stopped. Any remaining songs have been removed", delete_after=60)
 
     async def volume(self, interaction: nextcord.Interaction, volume: int):
@@ -48,11 +47,10 @@ class MediaController:
     async def queue(self, interaction: nextcord.Interaction):
         text = []
         lines = 5
-        if self.queue.length() < lines:
-            lines = self.queue.length()
-        video: YouTubeVideo
+        if self._queue.length() < lines:
+            lines = self._queue.length()
         for i in range(lines):
-            video = self.queue.get(i)
+            video: YouTubeVideo = self._queue.get(i)
             text.append(f"{video.video.title}")
         await interaction.send("\n".join(text))
 
@@ -91,8 +89,8 @@ class MediaController:
 
     @tasks.loop(1)
     async def song_loop(self):
-        if self.queue.is_empty():
+        if self._queue.is_empty():
             self.song_loop.stop()
             return
-        video: YouTubeVideo = self.queue.pop(0)
+        video: YouTubeVideo = self._queue.pop(0)
         await self._play_music(video)
