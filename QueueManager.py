@@ -26,3 +26,6 @@ class QueueManager:
 
     def length(self) -> int:
         return len(self._queue)
+
+    def clear(self):
+        self._queue.clear()
