@@ -24,6 +24,11 @@ class MediaController:
         vc.pause()
         await interaction.send("Playback has been paused.", delete_after=60)
 
+    async def resume(self, interaction: nextcord.Interaction):
+        vc: nextcord.VoiceClient = interaction.guild.voice_client
+        vc.resume()
+        await interaction.send("Playback has been resumed.", delete_after=60)
+
     async def skip(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
         vc.stop()
