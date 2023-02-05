@@ -1,4 +1,5 @@
 from YouTubeVideoBuilder import YoutubeVideoBuilder
+from typing import Optional
 import YouTubeVideo
 
 
@@ -9,7 +10,9 @@ class QueueManager:
     def pop(self, index=0) -> YouTubeVideo:
         return self._queue.pop(index)
 
-    def get(self, index) -> YouTubeVideo:
+    def get(self, index) -> Optional[YouTubeVideo]:
+        if not index < len(self._queue):
+            return None
         return self._queue[index]
 
     def get_next(self) -> YouTubeVideo:
