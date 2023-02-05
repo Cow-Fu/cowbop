@@ -8,16 +8,18 @@ class MediaController:
     def __init__(self):
         self._queue = QueueManager()
         self._volume = 5
+        self._current_song: YouTubeVideo = None
+        self.is_loop_running = False
 
     async def play(self, interaction: nextcord.Interaction, url: str):
         if not interaction.guild.voice_client:
             if not interaction.user.voice:
-                interaction.send("You must first join a voice channel!", ephemeral=True)
+                await interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
             await interaction.user.voice.channel.connect()
-        self._queue.add(self, interaction, url)
-        if not self.song_loop.is_running():
-            self.song_loop.start()
+        self._queue.add(interaction, url)
+        if not self.is_loop_running:
+            await self.song_loop()
 
     async def pause(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
@@ -26,6 +28,8 @@ class MediaController:
 
     async def resume(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
+        if not vc:
+            interaction.send("Not connected to voice chat.", delete_after=60)
         vc.resume()
         await interaction.send("Playback has been resumed.", delete_after=60)
 
@@ -36,9 +40,11 @@ class MediaController:
 
     async def stop(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
+        if not vc:
+            interaction.send("Not connected to voice chat.", delete_after=60)
         vc.stop()
         self._queue.clear()
-        await interaction.send("Stopped. Any remaining songs have been removed", delete_after=60)
+        await interaction.send("Stopped. Any remaining songs have been removed.", delete_after=60)
 
     async def volume(self, interaction: nextcord.Interaction, volume: int):
         if not 0 < volume <= 100:
@@ -52,8 +58,12 @@ class MediaController:
     async def queue(self, interaction: nextcord.Interaction):
         text = []
         lines = 5
+        if self._queue.length() == 0:
+            await interaction.send("No songs in queue", delete_after=60)
         if self._queue.length() < lines:
             lines = self._queue.length()
+        if self._current_song:
+            text.append(f"Current song: {self._current_song.video.title}")
         for i in range(lines):
             video: YouTubeVideo = self._queue.get(i)
             text.append(f"{video.video.title}")
@@ -90,12 +100,25 @@ class MediaController:
             return
         audio = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
         audio.volume = self._volume / 100
-        vc.play(audio)
+        vc.play(source=audio, after=self.song_loop)
 
-    @tasks.loop(1)
-    async def song_loop(self):
+    async def song_loop(self, *args, **kwargs):
         if self._queue.is_empty():
-            self.song_loop.stop()
+            self.is_loop_running = False
             return
-        video: YouTubeVideo = self._queue.pop(0)
-        await self._play_music(video)
+        self.is_loop_running = True
+        self._current_song = self._queue.get(0)
+        await self._play_music(self._current_song)
+        self._queue.pop(0)
+    # @tasks.loop(seconds=1)
+    # async def song_loop(self):
+    #     if self._queue.is_empty() and self.song_loop.is_running():
+    #         self.song_loop.stop()
+    #         return
+    #     if not self._current_song:
+        #     self._current_song = self._queue.get(0)
+        #
+        # if self._current_song.guild.voice_client.is_playing():
+        #     return
+        # await self._play_music(video)
+        # self._queue.pop(0)
