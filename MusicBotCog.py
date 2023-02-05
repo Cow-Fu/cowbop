@@ -36,3 +36,9 @@ class MusicBotCog(Cog):
     @nextcord.slash_command(description="Displays the current song queue")
     async def queue(self, interaction: nextcord.Interaction):
         await self.media_controller.queue(interaction)
+
+    @nextcord.ext.commands.Cog.listener()
+    async def on_voice_state_update(self, member, before, after):
+        vc = member.guild.voice_client
+        if vc is not None and len(vc.channel.members) == 1:
+            await vc.disconnect()
