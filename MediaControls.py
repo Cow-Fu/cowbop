@@ -1,6 +1,5 @@
 from QueueManager import QueueManager
 from YouTubeVideo import YouTubeVideo
-from nextcord.ext import tasks
 import nextcord
 
 
