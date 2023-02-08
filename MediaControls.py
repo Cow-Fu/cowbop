@@ -110,15 +110,3 @@ class MediaController:
         self._current_song = self._queue.get(0)
         await self._play_music(self._current_song)
         self._queue.pop(0)
-    # @tasks.loop(seconds=1)
-    # async def song_loop(self):
-    #     if self._queue.is_empty() and self.song_loop.is_running():
-    #         self.song_loop.stop()
-    #         return
-    #     if not self._current_song:
-        #     self._current_song = self._queue.get(0)
-        #
-        # if self._current_song.guild.voice_client.is_playing():
-        #     return
-        # await self._play_music(video)
-        # self._queue.pop(0)
