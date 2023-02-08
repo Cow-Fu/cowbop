@@ -57,7 +57,7 @@ class MediaController:
     async def queue(self, interaction: nextcord.Interaction):
         text = []
         lines = 5
-        if self._queue.length() == 0:
+        if self._queue.length() == 0 and self._current_song is None:
             await interaction.send("No songs in queue", delete_after=60)
         if self._queue.length() < lines:
             lines = self._queue.length()
@@ -104,6 +104,7 @@ class MediaController:
     async def song_loop(self, *args, **kwargs):
         if self._queue.is_empty():
             self.is_loop_running = False
+            self._current_song = None
             return
         self.is_loop_running = True
         self._current_song = self._queue.get(0)
