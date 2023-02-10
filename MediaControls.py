@@ -21,13 +21,13 @@ class MediaController:
         if not self.is_loop_running:
             await self.song_loop()
 
-    async def search(self, interaction: nextcord.Interaction, url: str):
+    async def search(self, interaction: nextcord.Interaction, query: str):
         if not interaction.guild.voice_client:
             if not interaction.user.voice:
                 await interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
-        result = pytube.Search(url)
-        embed = nextcord.Embed(title="Results")
+        result = pytube.Search(query)
+        embed = nextcord.Embed(title=f"Results for: \"{query}\"")
         for i, x in enumerate(result.results[:5]):
             embed.add_field(name=f"Song {i + 1}", value=x.title, inline=False)
         await interaction.send(embed=embed)
