@@ -29,7 +29,7 @@ class MediaController:
         result = pytube.Search(url)
         embed = nextcord.Embed(title="Results")
         for i, x in enumerate(result.results[:5]):
-            embed.add_field(name=f"Song {i}", value=x.title, inline=False)
+            embed.add_field(name=f"Song {i + 1}", value=x.title, inline=False)
         await interaction.send(embed=embed)
 
     async def pause(self, interaction: nextcord.Interaction):
