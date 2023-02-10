@@ -13,6 +13,10 @@ class MusicBotCog(Cog):
     async def play(self, interaction: nextcord.Interaction, url: str):
         await self.media_controller.play(interaction, url)
 
+    @nextcord.slash_command(description="Searches for given query")
+    async def search(self, interaction: nextcord.Interaction, url: str):
+        await self.media_controller(interaction, url)
+
     @nextcord.slash_command(description="Pauses current song")
     async def pause(self, interaction: nextcord.Interaction):
         await self.media_controller.pause(interaction)

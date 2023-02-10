@@ -1,6 +1,7 @@
 from QueueManager import QueueManager
 from YouTubeVideo import YouTubeVideo
 import nextcord
+import pytube
 
 
 class MediaController:
@@ -19,6 +20,17 @@ class MediaController:
         self._queue.add(interaction, url)
         if not self.is_loop_running:
             await self.song_loop()
+
+    async def search(self, interaction: nextcord.Interaction, url: str):
+        if not interaction.guild.voice_client:
+            if not interaction.user.voice:
+                await interaction.send("You must first join a voice channel!", ephemeral=True)
+                return
+        result = pytube.Search(url)
+        embed = nextcord.Embed(title="Results")
+        for i, x in enumerate(result.results[:5]):
+            embed.add_field(f"Song {i}", x.title)
+        await interaction.send(embed=embed)
 
     async def pause(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
