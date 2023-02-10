@@ -1,5 +1,6 @@
 from QueueManager import QueueManager
 from YouTubeVideo import YouTubeVideo
+from math import floor
 import nextcord
 import pytube
 
@@ -29,7 +30,7 @@ class MediaController:
         result = pytube.Search(query)
         embed = nextcord.Embed(title=f"Results for: \"{query}\"")
         for i, x in enumerate(result.results[:5]):
-            embed.add_field(name=f"Song {i + 1}", value=x.title, inline=False)
+            embed.add_field(name=f"Song {i + 1}", value=f"{x.title} ({self._get_time_from_seconds(x.length)})", inline=False)
         await interaction.send(embed=embed)
 
     async def pause(self, interaction: nextcord.Interaction):
@@ -122,3 +123,6 @@ class MediaController:
         self._current_song = self._queue.get(0)
         await self._play_music(self._current_song)
         self._queue.pop(0)
+
+    def _get_time_from_seconds(seconds):
+        return f"{floor(seconds / 60)}:{seconds % 60}"
