@@ -99,9 +99,9 @@ class MediaController:
         inter = video.interaction
         vc: nextcord.VoiceClient = inter.guild.voice_client
         user_voice_client = inter.user.voice
-        if not vc: 
+        if not vc:
             await user_voice_client.channel.connect()
-        if not vc.is_connected():
+        if not inter.guild.voice_client.is_connected():
             if not user_voice_client.channel.connect():
                 await inter.send("You need to be connected to a voice channel!", 
                                  ephemeral=True, delete_after=60)
@@ -112,7 +112,7 @@ class MediaController:
             return
         audio = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
         audio.volume = self._volume / 100
-        vc.play(source=audio, after=self.song_loop)
+        inter.guild.voice_client.play(source=audio, after=self.song_loop)
 
     async def song_loop(self, *args, **kwargs):
         if self._queue.is_empty():
