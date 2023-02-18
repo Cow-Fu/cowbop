@@ -5,6 +5,34 @@ import nextcord
 import pytube
 
 
+class SongSelectionButton(nextcord.ui.Button):
+    def __init__(self, controller, value: pytube.YouTube, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.controller = controller
+        self.value = value
+
+    async def callback(self, interaction: nextcord.Interaction):
+        self.controller: MediaController
+        self.controller._queue.add(interaction, self.value.watch_url)
+        if not self.controller.is_loop_running:
+            await self.controller.song_loop()
+        self.view.stop()
+        await interaction.edit(view=None)
+        # TODO do callback here
+
+
+class SongSelectionView(nextcord.ui.View):
+    def __init__(self, interaction: nextcord.Interaction, media_controller, data):
+        super().__init__()
+        self.interaction = interaction
+        self.value = None
+
+        for i, x in enumerate(data):
+            btn = SongSelectionButton(media_controller, x, label=f"Song {i + 1}")
+            btn.style = nextcord.ButtonStyle.blurple
+            self.add_item(btn)
+
+
 class MediaController:
     def __init__(self):
         self._queue = QueueManager()
@@ -28,10 +56,12 @@ class MediaController:
                 await interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
         result = pytube.Search(query)
-        embed = nextcord.Embed(title=f"Results for: \"{query}\"")
+        view = SongSelectionView(interaction, self, result.results[:5])
+
+        embed = nextcord.Embed(title=f'Results for: "{query}"')
         for i, x in enumerate(result.results[:5]):
             embed.add_field(name=f"Song {i + 1}", value=f"{x.title} ({self._get_time_from_seconds(x.length)})", inline=False)
-        await interaction.send(embed=embed)
+        await interaction.send(embed=embed, view=view)
 
     async def pause(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
@@ -100,6 +130,7 @@ class MediaController:
         vc: nextcord.VoiceClient = inter.guild.voice_client
         user_voice_client = inter.user.voice
         if not vc:
+            print(user_voice_client)
             await user_voice_client.channel.connect()
         if not inter.guild.voice_client.is_connected():
             if not user_voice_client.channel.connect():
@@ -124,5 +155,9 @@ class MediaController:
         await self._play_music(self._current_song)
         self._queue.pop(0)
 
-    def _get_time_from_seconds(seconds):
-        return f"{floor(seconds / 60)}:{seconds % 60}"
+    def _get_time_from_seconds(self, seconds):
+        minutes = floor(seconds / 60)
+        seconds = seconds % 60
+        if seconds < 10:
+            seconds = f"0{seconds}"
+        return f"{minutes}:{seconds}"
