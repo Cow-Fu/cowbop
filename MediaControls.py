@@ -19,7 +19,7 @@ class SongSelectionButton(nextcord.ui.Button):
             is_queue_ongoing = False
             await self.controller.song_loop()
         self.view.stop()
-        text = f"Playing {self.label()}: " if is_queue_ongoing else f"Added {self.label()}: "
+        text = f"Playing {self.label}: " if is_queue_ongoing else f"Added {self.label}: "
         await interaction.edit(f"{text}{self.value.title}", embed=None, view=None)
         # TODO do callback here
 
