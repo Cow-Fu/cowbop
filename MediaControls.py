@@ -136,7 +136,6 @@ class MediaController:
         vc: nextcord.VoiceClient = inter.guild.voice_client
         user_voice_client = inter.user.voice
         if not vc:
-            print(user_voice_client)
             await user_voice_client.channel.connect()
         if not inter.guild.voice_client.is_connected():
             if not user_voice_client.channel.connect():
