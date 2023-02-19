@@ -58,12 +58,13 @@ class MediaController:
             if not interaction.user.voice:
                 await interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
+        await interaction.response.defer()
         result = pytube.Search(query)
         view = SongSelectionView(interaction, self, result.results[:5])
 
         embed = nextcord.Embed(title=f'Results for: "{query}"')
         for i, x in enumerate(result.results[:5]):
-            embed.add_field(name=f"Song {i + 1}", value=f"{x.title} ({self._get_time_from_seconds(x.length)})", inline=False)
+            embed.add_field(name=f"Song {i + 1}", value=f"{x.title} ({self.get_time_from_seconds(x.length)})", inline=False)
         await interaction.send(embed=embed, view=view)
 
     async def pause(self, interaction: nextcord.Interaction):
@@ -158,7 +159,7 @@ class MediaController:
         await self._play_music(self._current_song)
         self._queue.pop(0)
 
-    def _get_time_from_seconds(self, seconds):
+    def get_time_from_seconds(self, seconds):
         minutes = floor(seconds / 60)
         seconds = seconds % 60
         if seconds < 10:
