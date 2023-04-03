@@ -5,6 +5,24 @@ import nextcord
 import pytube
 
 
+# TODO av_interleaved_write_frame error seemingly from the search command
+# prolly need to add the play func to the pytube download callback
+
+# TODO figure out why this link breaks it https://www.youtube.com/watch?v=nt9c0UeYhFc
+# so it looks like Google is throttling connections, prolly need to swap to yt-dlp since pytube isn't updated much
+
+class SongSelectionView(nextcord.ui.View):
+    def __init__(self, interaction: nextcord.Interaction, media_controller, message_author, data):
+        super().__init__()
+        self.interaction = interaction
+        self.value = None
+
+        for index, song_title in enumerate(data):
+            btn = SongSelectionButton(media_controller, message_author, song_title, label=f"Song {index + 1}")
+            btn.style = nextcord.ButtonStyle.blurple
+            self.add_item(btn)
+
+
 class SongSelectionButton(nextcord.ui.Button):
     def __init__(self, controller, message_author, value: pytube.YouTube, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,19 +44,6 @@ class SongSelectionButton(nextcord.ui.Button):
         song_length = self.controller.get_time_from_seconds(self.value.length)
         await interaction.message.delete()
         await interaction.message.channel.send(content=f"{author} {status} {title} ({song_length})", embed=None, view=None)
-
-
-class SongSelectionView(nextcord.ui.View):
-    def __init__(self, interaction: nextcord.Interaction, media_controller, message_author, data):
-        super().__init__()
-        self.interaction = interaction
-        self.value = None
-
-        for index, song_title in enumerate(data):
-            btn = SongSelectionButton(media_controller, message_author, song_title, label=f"Song {index + 1}")
-            btn.style = nextcord.ButtonStyle.blurple
-            self.add_item(btn)
-
 
 class MediaController:
     def __init__(self):
@@ -64,12 +69,15 @@ class MediaController:
                 return
         await interaction.response.defer()
         result = pytube.Search(query)
-        view = SongSelectionView(interaction, self, interaction.message.author, result.results[:5])
+        view = SongSelectionView(interaction, self, interaction.user, result.results[:5])
 
         embed = nextcord.Embed(title=f'Results for: "{query}"')
         for i, x in enumerate(result.results[:5]):
-            embed.add_field(name=f"Song {i + 1}", value=f"{x.title} ({self.get_time_from_seconds(x.length)})", inline=False)
-        await interaction.send(embed=embed, view=view)
+            value = x.title
+            if x.length:
+                value = f"{value} ({self.get_time_from_seconds(x.length)})"
+            embed.add_field(name=f"Song {i + 1}", value=value, inline=False)
+        await interaction.followup.send(embed=embed, view=view)
 
     async def pause(self, interaction: nextcord.Interaction):
         vc: nextcord.VoiceClient = interaction.guild.voice_client
