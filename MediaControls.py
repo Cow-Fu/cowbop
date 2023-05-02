@@ -2,7 +2,6 @@ from QueueManager import QueueManager
 from YouTubeVideo import YouTubeVideo
 from math import floor
 import nextcord
-import pytube
 
 
 # TODO av_interleaved_write_frame error seemingly from the search command
@@ -11,40 +10,40 @@ import pytube
 # TODO figure out why this link breaks it https://www.youtube.com/watch?v=nt9c0UeYhFc
 # so it looks like Google is throttling connections, prolly need to swap to yt-dlp since pytube isn't updated much
 
-class SongSelectionView(nextcord.ui.View):
-    def __init__(self, interaction: nextcord.Interaction, media_controller, message_author, data):
-        super().__init__()
-        self.interaction = interaction
-        self.value = None
-
-        for index, song_title in enumerate(data):
-            btn = SongSelectionButton(media_controller, message_author, song_title, label=f"Song {index + 1}")
-            btn.style = nextcord.ButtonStyle.blurple
-            self.add_item(btn)
-
-
-class SongSelectionButton(nextcord.ui.Button):
-    def __init__(self, controller, message_author, value: pytube.YouTube, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.controller = controller
-        self.message_author = message_author
-        self.value = value
-
-    async def callback(self, interaction: nextcord.Interaction):
-        self.controller: MediaController
-        self.controller._queue.add(interaction, self.value.watch_url)
-        is_queue_ongoing = True
-        if not self.controller.is_loop_running:
-            is_queue_ongoing = False
-            await self.controller.song_loop()
-        self.view.stop()
-        author = self.message_author.display_name
-        status = f"Added {self.label}:" if is_queue_ongoing else f"Playing {self.label}:"
-        title = self.value.title
-        song_length = self.controller.get_time_from_seconds(self.value.length)
-        await interaction.message.delete()
-        await interaction.message.channel.send(content=f"{author} {status} {title} ({song_length})", embed=None, view=None)
-
+# class SongSelectionView(nextcord.ui.View):
+#     def __init__(self, interaction: nextcord.Interaction, media_controller, message_author, data):
+#         super().__init__()
+#         self.interaction = interaction
+#         self.value = None
+#
+#         for index, song_title in enumerate(data):
+#             btn = SongSelectionButton(media_controller, message_author, song_title, label=f"Song {index + 1}")
+#             btn.style = nextcord.ButtonStyle.blurple
+#             self.add_item(btn)
+#
+#
+# class SongSelectionButton(nextcord.ui.Button):
+#     def __init__(self, controller, message_author, value: pytube.YouTube, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.controller = controller
+#         self.message_author = message_author
+#         self.value = value
+#
+#     async def callback(self, interaction: nextcord.Interaction):
+#         self.controller: MediaController
+#         self.controller._queue.add(interaction, self.value.watch_url)
+#         is_queue_ongoing = True
+#         if not self.controller.is_loop_running:
+#             is_queue_ongoing = False
+#             await self.controller.song_loop()
+#         self.view.stop()
+#         author = self.message_author.display_name
+#         status = f"Added {self.label}:" if is_queue_ongoing else f"Playing {self.label}:"
+#         title = self.value.title
+#         song_length = self.controller.get_time_from_seconds(self.value.length)
+#         await interaction.message.delete()
+#         await interaction.message.channel.send(content=f"{author} {status} {title} ({song_length})", embed=None, view=None)
+#
 class MediaController:
     def __init__(self):
         self._queue = QueueManager()
