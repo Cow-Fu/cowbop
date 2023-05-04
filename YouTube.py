@@ -64,7 +64,7 @@ class YouTubeManager:
             return None
         return YoutubeVideoBuilder.build(interaction, x)
 
-    def download(video: YouTubeVideo):
+    def download(self, video: YouTubeVideo):
         with yt_dlp.YoutubeDL(YouTubeManager._ydl_opts) as ydl:
             ydl.download(video.webpage_url)
     def search(self, interaction: Interaction, query: str, count=5):
