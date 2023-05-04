@@ -1,5 +1,5 @@
 import yt_dlp
-from typing import Optional
+from typing import Optional, List
 from nextcord import Interaction
 from dataclasses import dataclass
 
