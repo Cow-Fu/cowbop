@@ -67,6 +67,16 @@ class YouTubeManager:
     def download(video: YouTubeVideo):
         with yt_dlp.YoutubeDL(YouTubeManager._ydl_opts) as ydl:
             ydl.download(video.webpage_url)
+    def search(self, interaction: Interaction, query: str, count=5):
+        querystr = f"ytsearch{count}:{query}"
+        x = self.get_video_info(querystr)
+        if not x:
+            interaction.send("idk man, ask @Cow_Fu what broke this time")
+            return
+        results = []
+        for entry in x["entries"]:
+            results.append(YoutubeVideoBuilder.build(interaction, entry))
+        return results
 
     def get_video_info(self, url=str) -> Optional[dict]:
         """
