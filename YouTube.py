@@ -12,6 +12,7 @@ class YouTubeVideo:
     title: str
     duration: int
     duration_string: str
+    is_downloaded: bool = False
 
 
 class YoutubeVideoBuilder:
@@ -67,6 +68,8 @@ class YouTubeManager:
     def download(self, video: YouTubeVideo):
         with yt_dlp.YoutubeDL(YouTubeManager._ydl_opts) as ydl:
             ydl.download(video.webpage_url)
+            video.is_downloaded = True
+
     def search(self, interaction: Interaction, query: str, count=5):
         querystr = f"ytsearch{count}:{query}"
         x = self.get_video_info(querystr)
