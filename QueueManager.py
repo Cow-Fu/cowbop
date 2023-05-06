@@ -1,11 +1,11 @@
-from YouTubeVideoBuilder import YoutubeVideoBuilder
 from typing import Optional
-import YouTubeVideo
+from YouTube import YouTubeVideo, YouTubeManager
 
 
 class QueueManager:
     def __init__(self):
         self._queue = []
+        self._yt_manager = YouTubeManager()
 
     def pop(self, index=0) -> YouTubeVideo:
         return self._queue.pop(index)
@@ -20,7 +20,7 @@ class QueueManager:
 
     def add(self, interaction, url) -> bool:
         video: YouTubeVideo
-        video = YoutubeVideoBuilder.build(interaction, url)
+        video = self._yt_manager.get_video(interaction, url)
         self._queue.append(video)
         return True
 
