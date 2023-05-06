@@ -49,6 +49,7 @@ class YouTubeManager:
     _ydl_opts = {
         'logger': MyLogger(),
         'format': 'bestaudio/best',
+        'outtmpl': 'file',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
