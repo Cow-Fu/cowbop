@@ -12,6 +12,7 @@ class YouTubeVideo:
     title: str
     duration: int
     duration_string: str
+    channel_name: str
     is_downloaded: bool = False
 
 
@@ -23,7 +24,8 @@ class YoutubeVideoBuilder:
                             ydl_obj['webpage_url'],
                             ydl_obj['title'],
                             ydl_obj['duration'],
-                            ydl_obj['duration_string']
+                            ydl_obj['duration_string'],
+                            ydl_obj['channel']
                             )
 
 
