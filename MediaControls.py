@@ -23,26 +23,28 @@ class SongSelectionView(nextcord.ui.View):
 
 
 class SongSelectionButton(nextcord.ui.Button):
-    def __init__(self, controller, message_author, value: YouTubeVideo, *args, **kwargs):
+    def __init__(self, controller, message_author: nextcord.Member, value: YouTubeVideo, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.controller = controller
         self.message_author = message_author
         self.value = value
 
     async def callback(self, interaction: nextcord.Interaction):
+        await interaction.message.edit(view=None)
+        await interaction.response.defer()
         self.controller: MediaController
         self.controller._queue.add(interaction, self.value.webpage_url)
         is_queue_ongoing = True
         if not self.controller.is_loop_running:
             is_queue_ongoing = False
             await self.controller.song_loop()
-        self.view.stop()
-        author = self.message_author.display_name
-        status = f"Added {self.label}:" if is_queue_ongoing else f"Playing {self.label}:"
-        title = self.value.title
-        song_length = self.value.duration_string
-        await interaction.message.delete()
-        await interaction.message.channel.send(content=f"{author} {status} {title} ({song_length})", embed=None, view=None)
+        embed = nextcord.Embed(title=self.value.title, url=self.value.webpage_url)
+        embed.set_author(name="Now Playing")
+        embed.add_field(name="Added By", value=self.message_author.mention)
+        embed.add_field(name="Channel Name", value=self.value.channel_name)
+        embed.add_field(name="Duration", value=self.value.duration_string)
+        await interaction.message.edit(embed=embed, view=None)
+
 
 class MediaController:
     def __init__(self):
@@ -59,6 +61,8 @@ class MediaController:
                 return
             await interaction.user.voice.channel.connect()
         self._queue.add(interaction, url)
+        video = self._queue.get(self._queue.length() - 1)
+        await interaction.send(embed=self._build_song_embed(interaction.user, video))
         if not self.is_loop_running:
             await self.song_loop()
 
@@ -70,6 +74,7 @@ class MediaController:
         await interaction.response.defer()
         print(f"searching for {query}")
         result = self._yt_manager.search(interaction, query)
+        interaction.user
 
         view = SongSelectionView(interaction, self, interaction.user, result)
         embed = nextcord.Embed(title=f'Results for: "{query}"')
@@ -124,25 +129,12 @@ class MediaController:
         if self._queue.length() < lines:
             lines = self._queue.length()
         if self._current_song:
-            text.append(f"Current song: {self._current_song.video.title}")
+            text.append(f"Current song: {self._current_song.title}")
         for i in range(lines):
             video: YouTubeVideo = self._queue.get(i)
-            text.append(f"{video.video.title}")
+            text.append(f"{video.title}")
         await interaction.send("\n".join(text))
 
-    def _download_video(self, yt_video: YouTubeVideo):
-        video = yt_video.video
-        try:
-            stream = video.streams.filter(mime_type="audio/mp4").last()
-        except Exception:
-            video.bypass_age_gate()
-            stream = video.streams.filter(mime_type="audio/mp4").last()
-        try:
-            stream.download(filename="file.mp4")
-        except Exception as e:
-            print(f"{e}\n{type(e)}")
-            return False
-        return True
 
     async def _play_music(self, video: YouTubeVideo):
         inter = video.interaction
@@ -152,7 +144,7 @@ class MediaController:
             await user_voice_client.channel.connect()
         if not inter.guild.voice_client.is_connected():
             if not user_voice_client.channel.connect():
-                await inter.send("You need to be connected to a voice channel!", 
+                await inter.send("You need to be connected to a voice channel!",
                                  ephemeral=True, delete_after=60)
                 return
             await user_voice_client.channel.connect()
@@ -174,6 +166,13 @@ class MediaController:
         self._current_song = self._queue.get(0)
         await self._play_music(self._current_song)
         self._queue.pop(0)
+
+    def _build_song_embed(self, author: nextcord.Member, video: YouTubeVideo):
+        return nextcord.Embed(title=video.title, url=video.webpage_url) \
+            .set_author(name="Now Playing") \
+            .add_field(name="Added By", value=author.mention) \
+            .add_field(name="Channel Name", value=video.channel_name) \
+            .add_field(name="Duration", value=video.duration_string)
 
     def get_time_from_seconds(self, seconds):
         minutes = floor(seconds / 60)
