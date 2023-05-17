@@ -46,5 +46,7 @@ class MusicBotCog(Cog):
         vc: nextcord.VoiceClient = member.guild.voice_client
         if vc is None:
             return
-        if len(vc.channel.members) == 1 or all([m.bot for m in vc.channel.members]):
-            await vc.disconnect()
+        for member in vc.channel.members:
+            if not member.bot:
+                return
+        await vc.disconnect()
