@@ -42,7 +42,9 @@ class MusicBotCog(Cog):
         await self.media_controller.queue(interaction)
 
     @nextcord.ext.commands.Cog.listener()
-    async def on_voice_state_update(self, member, before, after):
-        vc = member.guild.voice_client
-        if vc is not None and len(vc.channel.members) == 1:
+    async def on_voice_state_update(self, member: nextcord.Member, before, after):
+        vc: nextcord.VoiceClient = member.guild.voice_client
+        if vc is None:
+            return
+        if len(vc.channel.members) == 1 or all([m.bot for m in vc.channel.members]):
             await vc.disconnect()
