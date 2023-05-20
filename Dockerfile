@@ -11,13 +11,9 @@ RUN apt install -y fish \
 RUN wget 'https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.deb'
 RUN apt install ./nvim-linux64.deb
 
-WORKDIR /root/.config/nvim
-RUN wget 'https://raw.githubusercontent.com/Cow-Fu/kickstart.nvim/master/init.lua'
-
-# takes 3 times to do it for some reason
-RUN nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-RUN nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-RUN nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+WORKDIR /root/.config
+RUN git clone "https://github.com/Cow-Fu/kickstart.nvim.git"
+RUN mv kickstart.nvim nvim
 
 # install python lsp server
 RUN nvim --headless -c "MasonInstall python-lsp-server" -c qall

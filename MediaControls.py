@@ -1,8 +1,7 @@
 from QueueManager import QueueManager
-from YouTubeVideo import YouTubeVideo
+from YouTube import YouTubeVideo, YouTubeManager
 from math import floor
 import nextcord
-import pytube
 
 
 # TODO av_interleaved_write_frame error seemingly from the search command
@@ -24,26 +23,28 @@ class SongSelectionView(nextcord.ui.View):
 
 
 class SongSelectionButton(nextcord.ui.Button):
-    def __init__(self, controller, message_author, value: pytube.YouTube, *args, **kwargs):
+    def __init__(self, controller, message_author: nextcord.Member, value: YouTubeVideo, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.controller = controller
         self.message_author = message_author
         self.value = value
 
     async def callback(self, interaction: nextcord.Interaction):
+        await interaction.message.edit(view=None)
+        await interaction.response.defer()
         self.controller: MediaController
-        self.controller._queue.add(interaction, self.value.watch_url)
+        self.controller._queue.add(interaction, self.value.webpage_url)
         is_queue_ongoing = True
         if not self.controller.is_loop_running:
             is_queue_ongoing = False
             await self.controller.song_loop()
-        self.view.stop()
-        author = self.message_author.display_name
-        status = f"Added {self.label}:" if is_queue_ongoing else f"Playing {self.label}:"
-        title = self.value.title
-        song_length = self.controller.get_time_from_seconds(self.value.length)
-        await interaction.message.delete()
-        await interaction.message.channel.send(content=f"{author} {status} {title} ({song_length})", embed=None, view=None)
+        embed = nextcord.Embed(title=self.value.title, url=self.value.webpage_url)
+        embed.set_author(name="Now Playing")
+        embed.add_field(name="Added By", value=self.message_author.mention)
+        embed.add_field(name="Channel Name", value=self.value.channel_name)
+        embed.add_field(name="Duration", value=self.value.duration_string)
+        await interaction.message.edit(embed=embed, view=None)
+
 
 class MediaController:
     def __init__(self):
@@ -51,6 +52,7 @@ class MediaController:
         self._volume = 5
         self._current_song: YouTubeVideo = None
         self.is_loop_running = False
+        self._yt_manager = YouTubeManager()
 
     async def play(self, interaction: nextcord.Interaction, url: str):
         if not interaction.guild.voice_client:
@@ -59,6 +61,8 @@ class MediaController:
                 return
             await interaction.user.voice.channel.connect()
         self._queue.add(interaction, url)
+        video = self._queue.get(self._queue.length() - 1)
+        await interaction.send(embed=self._build_song_embed(interaction.user, video))
         if not self.is_loop_running:
             await self.song_loop()
 
@@ -68,14 +72,17 @@ class MediaController:
                 await interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
         await interaction.response.defer()
-        result = pytube.Search(query)
-        view = SongSelectionView(interaction, self, interaction.user, result.results[:5])
+        print(f"searching for {query}")
+        result = self._yt_manager.search(interaction, query)
+        interaction.user
 
+        view = SongSelectionView(interaction, self, interaction.user, result)
         embed = nextcord.Embed(title=f'Results for: "{query}"')
-        for i, x in enumerate(result.results[:5]):
+        for i, x in enumerate(result):
             value = x.title
-            if x.length:
-                value = f"{value} ({self.get_time_from_seconds(x.length)})"
+            if x.duration:
+                value = f"{value} ({x.duration_string})"
+                print(value)
             embed.add_field(name=f"Song {i + 1}", value=value, inline=False)
         await interaction.followup.send(embed=embed, view=view)
 
@@ -118,28 +125,16 @@ class MediaController:
         lines = 5
         if self._queue.length() == 0 and self._current_song is None:
             await interaction.send("No songs in queue", delete_after=60)
+            return
         if self._queue.length() < lines:
             lines = self._queue.length()
         if self._current_song:
-            text.append(f"Current song: {self._current_song.video.title}")
+            text.append(f"Current song: {self._current_song.title}")
         for i in range(lines):
             video: YouTubeVideo = self._queue.get(i)
-            text.append(f"{video.video.title}")
+            text.append(f"{video.title}")
         await interaction.send("\n".join(text))
 
-    def _download_video(self, yt_video: YouTubeVideo):
-        video = yt_video.video
-        try:
-            stream = video.streams.filter(mime_type="audio/mp4").last()
-        except Exception:
-            video.bypass_age_gate()
-            stream = video.streams.filter(mime_type="audio/mp4").last()
-        try:
-            stream.download(filename="file.mp4")
-        except Exception as e:
-            print(f"{e}\n{type(e)}")
-            return False
-        return True
 
     async def _play_music(self, video: YouTubeVideo):
         inter = video.interaction
@@ -149,14 +144,16 @@ class MediaController:
             await user_voice_client.channel.connect()
         if not inter.guild.voice_client.is_connected():
             if not user_voice_client.channel.connect():
-                await inter.send("You need to be connected to a voice channel!", 
+                await inter.send("You need to be connected to a voice channel!",
                                  ephemeral=True, delete_after=60)
                 return
             await user_voice_client.channel.connect()
-        if not self._download_video(video):
+
+        self._yt_manager.download(video)
+        if not video.is_downloaded:
             await inter.send("Unable to download video.")
             return
-        audio = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp4", options="-vn"))
+        audio = nextcord.PCMVolumeTransformer(nextcord.FFmpegPCMAudio("file.mp3", options="-vn"))
         audio.volume = self._volume / 100
         inter.guild.voice_client.play(source=audio, after=self.song_loop)
 
@@ -169,6 +166,13 @@ class MediaController:
         self._current_song = self._queue.get(0)
         await self._play_music(self._current_song)
         self._queue.pop(0)
+
+    def _build_song_embed(self, author: nextcord.Member, video: YouTubeVideo):
+        return nextcord.Embed(title=video.title, url=video.webpage_url) \
+            .set_author(name="Now Playing") \
+            .add_field(name="Added By", value=author.mention) \
+            .add_field(name="Channel Name", value=video.channel_name) \
+            .add_field(name="Duration", value=video.duration_string)
 
     def get_time_from_seconds(self, seconds):
         minutes = floor(seconds / 60)
