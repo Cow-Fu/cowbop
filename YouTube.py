@@ -2,6 +2,7 @@ import yt_dlp
 from typing import Optional, List
 from nextcord import Interaction
 from dataclasses import dataclass
+import asyncio
 
 
 @dataclass
@@ -14,6 +15,7 @@ class YouTubeVideo:
     duration_string: str
     channel_name: str
     is_downloaded: bool = False
+    _data: dict
 
 
 class YoutubeVideoBuilder:
@@ -25,7 +27,8 @@ class YoutubeVideoBuilder:
                             ydl_obj['title'],
                             ydl_obj['duration'],
                             ydl_obj['duration_string'],
-                            ydl_obj['channel']
+                            ydl_obj['channel'],
+                            ydl_obj
                             )
 
 
@@ -63,19 +66,18 @@ class YouTubeManager:
         self._yt_builder = YoutubeVideoBuilder()
 
     def get_video(self, interaction, url: str) -> Optional[YouTubeVideo]:
-        x = self.get_video_info(url)
+        x = self.extract_info(url)
         if not x:
             return None
         return YoutubeVideoBuilder.build(interaction, x)
 
-    def download(self, video: YouTubeVideo):
-        with yt_dlp.YoutubeDL(YouTubeManager._ydl_opts) as ydl:
-            ydl.download(video.webpage_url)
-            video.is_downloaded = True
+    async def download(self, video: YouTubeVideo):
+        return await self.extract_info(video.webpage_url, download=True)
+        video.is_downloaded = True
 
     def search(self, interaction: Interaction, query: str, count=5):
         querystr = f"ytsearch{count}:{query}"
-        x = self.get_video_info(querystr)
+        x = self.extract_info(querystr)
         if not x:
             interaction.send("idk man, ask @Cow_Fu what broke this time")
             return
@@ -84,13 +86,14 @@ class YouTubeManager:
             results.append(YoutubeVideoBuilder.build(interaction, entry))
         return results
 
-    def get_video_info(self, url=str) -> Optional[dict]:
+    async def extract_info(self, url=str, download=False) -> Optional[dict]:
         """
         Raises:
             yt_dlp.utils.DownloadError: Unable to download the video
         """
+        loop = asyncio.get_event_loop()
         with yt_dlp.YoutubeDL(YouTubeManager._ydl_opts) as ydl:
             try:
-                return ydl.extract_info(url, download=False)
+                return await loop.run_in_executor(None, lambda ydl.extract_info(url, download=download))
             except yt_dlp.utils.DownloadError as e:
                 return None
