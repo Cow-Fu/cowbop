@@ -33,7 +33,7 @@ class SongSelectionButton(nextcord.ui.Button):
         await interaction.message.edit(view=None)
         await interaction.response.defer()
         self.controller: MediaController
-        self.controller._queue.add(interaction, self.value.webpage_url)
+        await self.controller._queue.add(interaction, self.value.webpage_url)
         is_queue_ongoing = True
         if not self.controller.is_loop_running:
             is_queue_ongoing = False
@@ -60,7 +60,7 @@ class MediaController:
                 await interaction.send("You must first join a voice channel!", ephemeral=True)
                 return
             await interaction.user.voice.channel.connect()
-        self._queue.add(interaction, url)
+        await self._queue.add(interaction, url)
         video = self._queue.get(self._queue.length() - 1)
         await interaction.send(embed=self._build_song_embed(interaction.user, video))
         if not self.is_loop_running:
@@ -73,8 +73,7 @@ class MediaController:
                 return
         await interaction.response.defer()
         print(f"searching for {query}")
-        result = self._yt_manager.search(interaction, query)
-        interaction.user
+        result = await self._yt_manager.search(interaction, query)
 
         view = SongSelectionView(interaction, self, interaction.user, result)
         embed = nextcord.Embed(title=f'Results for: "{query}"')
@@ -148,8 +147,7 @@ class MediaController:
                                  ephemeral=True, delete_after=60)
                 return
             await user_voice_client.channel.connect()
-
-        self._yt_manager.download(video)
+        await self._yt_manager.download(video)
         if not video.is_downloaded:
             await inter.send("Unable to download video.")
             return

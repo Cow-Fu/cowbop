@@ -14,8 +14,8 @@ class YouTubeVideo:
     duration: int
     duration_string: str
     channel_name: str
-    is_downloaded: bool = False
     _data: dict
+    is_downloaded: bool = False
 
 
 class YoutubeVideoBuilder:
@@ -65,19 +65,20 @@ class YouTubeManager:
     def __init__(self):
         self._yt_builder = YoutubeVideoBuilder()
 
-    def get_video(self, interaction, url: str) -> Optional[YouTubeVideo]:
-        x = self.extract_info(url)
+    async def get_video(self, interaction, url: str) -> Optional[YouTubeVideo]:
+        x = await self.extract_info(url)
         if not x:
             return None
         return YoutubeVideoBuilder.build(interaction, x)
 
     async def download(self, video: YouTubeVideo):
-        return await self.extract_info(video.webpage_url, download=True)
+        result = await self.extract_info(video.webpage_url, download=True)
         video.is_downloaded = True
+        return result
 
-    def search(self, interaction: Interaction, query: str, count=5):
+    async def search(self, interaction: Interaction, query: str, count=5):
         querystr = f"ytsearch{count}:{query}"
-        x = self.extract_info(querystr)
+        x = await self.extract_info(querystr)
         if not x:
             interaction.send("idk man, ask @Cow_Fu what broke this time")
             return
@@ -94,6 +95,6 @@ class YouTubeManager:
         loop = asyncio.get_event_loop()
         with yt_dlp.YoutubeDL(YouTubeManager._ydl_opts) as ydl:
             try:
-                return await loop.run_in_executor(None, lambda ydl.extract_info(url, download=download))
+                return await loop.run_in_executor(None, lambda: ydl.extract_info(url, download=download))
             except yt_dlp.utils.DownloadError as e:
                 return None

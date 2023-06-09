@@ -18,9 +18,9 @@ class QueueManager:
     def get_next(self) -> YouTubeVideo:
         return self._queue[0]
 
-    def add(self, interaction, url) -> bool:
+    async def add(self, interaction, url) -> bool:
         video: YouTubeVideo
-        video = self._yt_manager.get_video(interaction, url)
+        video = await self._yt_manager.get_video(interaction, url)
         self._queue.append(video)
         return True
 
